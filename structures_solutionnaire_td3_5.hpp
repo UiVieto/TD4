@@ -11,7 +11,7 @@
 using gsl::span;
 using namespace std;
 
-struct Film; struct Acteur; // Permet d'utiliser les types alors qu'ils seront défini après.
+class Film; struct Acteur; // Permet d'utiliser les types alors qu'ils seront défini après.
 
 class ListeFilms {
 public:
@@ -73,11 +73,25 @@ private:
 };
 using ListeActeurs = Liste<Acteur>;
 
-struct Film
+class Item {
+public:
+	string titre = "Item"s;
+	int anneSortie = 0;
+};
+
+class Film : public Item
 {
+public:
 	string titre, realisateur; // Titre et nom du réalisateur (on suppose qu'il n'y a qu'un réalisateur).
-	int anneeSortie=0, recette=0; // Année de sortie et recette globale du film en millions de dollars
+	int anneeSortie = 0, recette = 0; // Année de sortie et recette globale du film en millions de dollars
 	ListeActeurs acteurs;
+};
+
+class Livre : public Item
+{
+public:
+	string titre, auteur;
+	int ventes, nPages;
 };
 
 struct Acteur
