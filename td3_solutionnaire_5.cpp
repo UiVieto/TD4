@@ -9,6 +9,8 @@
 #include "bibliotheque_cours.hpp"
 #include "verification_allocation.hpp" // Nos fonctions pour le rapport de fuites de mémoire.
 
+#include <vector>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -220,6 +222,13 @@ int main()
 	/*---------------------TD4----------------------*/
 
 	//TODO: 2.Construction de la bibilothèque
+	cout << "Creation bibliotheque:" << endl;
+	vector<Film*> bibliotheque(listeFilms.size());
+
+	for (Film* film : listeFilms.enSpan()) {
+		bibliotheque.push_back(film);
+		cout << film->titre << endl;
+	}
 
 	//TODO: 3.Affichage de la bibliothèque
 
