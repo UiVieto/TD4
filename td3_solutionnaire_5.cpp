@@ -217,6 +217,14 @@ int main()
 
 	ListeFilms listeFilms = creerListe("films.bin");
 	
+	/*---------------------TD4----------------------*/
+
+	//TODO: 2.Construction de la bibilothèque
+
+	//TODO: 3.Affichage de la bibliothèque
+
+	//TODO: 4.Un item combo FilmLivre
+
 	cout << ligneDeSeparation << "Le premier film de la liste est:" << endl;
 	// Le premier film de la liste.  Devrait être Alien.
 	cout << *listeFilms[0];
