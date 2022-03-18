@@ -9,6 +9,17 @@
 #include <cassert>
 #include "gsl/span"
 using gsl::span;
+// Solutionnaire du TD3 INF1015 hiver 2021
+// Par Francois-R.Boyer@PolyMtl.ca
+#pragma once
+// Structures mémoires pour une collection de films.
+
+#include <string>
+#include <memory>
+#include <functional>
+#include <cassert>
+#include "gsl/span"
+using gsl::span;
 using namespace std;
 
 struct Film; struct Acteur; // Permet d'utiliser les types alors qu'ils seront défini après.
@@ -76,15 +87,21 @@ using ListeActeurs = Liste<Acteur>;
 class Item {
 public:
 	Item() = default;
-	virtual ~Item();
+	Item(const Item& item) = delete;
+	virtual ~Item() = default;
+
+	virtual void afficher() = 0;
 
 	string titre = "Item"s;
-	int anneSortie = 0;
+	int anneeSortie = 0;
 };
+
 
 struct Film : public Item
 {
-public:
+	Film() = default;
+	virtual void afficher();
+
 	string titre, realisateur; // Titre et nom du réalisateur (on suppose qu'il n'y a qu'un réalisateur).
 	int anneeSortie = 0, recette = 0; // Année de sortie et recette globale du film en millions de dollars
 	ListeActeurs acteurs;
@@ -92,12 +109,13 @@ public:
 
 struct Livre : public Item
 {
-public:
-	string titre, auteur;
+	virtual void afficher();
+
+	string auteur;
 	int ventes, nPages;
 };
 
 struct Acteur
 {
-	string nom; int anneeNaissance=0; char sexe='\0';
+	string nom; int anneeNaissance = 0; char sexe = '\0';
 };

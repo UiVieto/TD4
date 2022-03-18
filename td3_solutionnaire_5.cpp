@@ -4,7 +4,7 @@
 #pragma region "Includes"//{
 #define _CRT_SECURE_NO_WARNINGS // On permet d'utiliser les fonctions de copies de chaînes qui sont considérées non sécuritaires.
 
-#include "structures_solutionnaire_td3_5.hpp"      // Structures de données pour la collection de films en mémoire.
+#include "structures.hpp"      // Structures de données pour la collection de films en mémoire.
 
 #include "bibliotheque_cours.hpp"
 #include "verification_allocation.hpp" // Nos fonctions pour le rapport de fuites de mémoire.
@@ -17,6 +17,7 @@
 #include <limits>
 #include <algorithm>
 #include <sstream>
+#include <iomanip>
 #include "cppitertools/range.hpp"
 #include "gsl/span"
 #include "debogage_memoire.hpp"        // Ajout des numéros de ligne des "new" dans le rapport de fuites.  Doit être après les include du système, qui peuvent utiliser des "placement new" (non supporté par notre ajout de numéros de lignes).
@@ -57,15 +58,15 @@ string lireString(istream& fichier)
 //[
 void ListeFilms::changeDimension(int nouvelleCapacite)
 {
-	Film** nouvelleListe = new Film*[nouvelleCapacite];
-	
+	Film** nouvelleListe = new Film * [nouvelleCapacite];
+
 	if (elements != nullptr) {  // Noter que ce test n'est pas nécessaire puique nElements_ sera zéro si elements_ est nul, donc la boucle ne tentera pas de faire de copie, et on a le droit de faire delete sur un pointeur nul (ça ne fait rien).
 		nElements = min(nouvelleCapacite, nElements);
 		for (int i : range(nElements))
 			nouvelleListe[i] = elements[i];
 		delete[] elements;
 	}
-	
+
 	elements = nouvelleListe;
 	capacite = nouvelleCapacite;
 }
@@ -117,9 +118,9 @@ shared_ptr<Acteur> ListeFilms::trouverActeur(const string& nomActeur) const
 shared_ptr<Acteur> lireActeur(istream& fichier, const ListeFilms& listeFilms)
 {
 	Acteur acteur = {};
-	acteur.nom            = lireString(fichier);
-	acteur.anneeNaissance = lireUint16 (fichier);
-	acteur.sexe           = lireUint8  (fichier);
+	acteur.nom = lireString(fichier);
+	acteur.anneeNaissance = lireUint16(fichier);
+	acteur.sexe = lireUint8(fichier);
 
 	shared_ptr<Acteur> acteurExistant = listeFilms.trouverActeur(acteur.nom);
 	if (acteurExistant != nullptr)
@@ -133,11 +134,11 @@ shared_ptr<Acteur> lireActeur(istream& fichier, const ListeFilms& listeFilms)
 Film* lireFilm(istream& fichier, ListeFilms& listeFilms)
 {
 	Film* film = new Film;
-	film->titre       = lireString(fichier);
+	film->titre = lireString(fichier);
 	film->realisateur = lireString(fichier);
-	film->anneeSortie = lireUint16 (fichier);
-	film->recette     = lireUint16 (fichier);
-	auto nActeurs = lireUint8 (fichier);
+	film->anneeSortie = lireUint16(fichier);
+	film->recette = lireUint16(fichier);
+	auto nActeurs = lireUint8(fichier);
 	film->acteurs = ListeActeurs(nActeurs);  // On n'a pas fait de méthode pour changer la taille d'allocation, seulement un constructeur qui prend la capacité.  Pour que cette affectation fonctionne, il faut s'assurer qu'on a un operator= de move pour ListeActeurs.
 	cout << "Création Film " << film->titre << endl;
 
@@ -152,14 +153,14 @@ ListeFilms creerListe(string nomFichier)
 {
 	ifstream fichier(nomFichier, ios::binary);
 	fichier.exceptions(ios::failbit);
-	
+
 	int nElements = lireUint16(fichier);
 
 	ListeFilms listeFilms;
 	for ([[maybe_unused]] int i : range(nElements)) { //NOTE: On ne peut pas faire un span simple avec ListeFilms::enSpan car la liste est vide et on ajoute des éléments à mesure.
 		listeFilms.ajouterFilm(lireFilm(fichier, listeFilms));
 	}
-	
+
 	return listeFilms;
 }
 
@@ -208,114 +209,78 @@ ostream& operator<< (ostream& os, const ListeFilms& listeFilms)
 	return os;
 }
 
-void Item::afficher() {
-	cout << "Titre: " << film.titre << "  Année :" << film.anneeSortie << endl;
-}
-
 void Film::afficher() {
-	cout << *this;
+	cout << "Titre: " << titre << endl;
+	cout << "  Réalisateur: " << realisateur << "  Année :" << anneeSortie << endl;
+	cout << "  Recette: " << recette << "M$" << endl;
 }
 
 void Livre::afficher() {
-	cout << "Titre: " << film.titre << endl;
-	cout << "  Réalisateur: " << film.realisateur << "  Année :" << film.anneeSortie << endl;
-	cout << "  Recette: " << film.recette << "M$" << endl;
-
-	cout << "Acteurs:" << endl;
+	cout << "Titre: " << titre << endl;
+	cout << "  Auteur: " << auteur << "  Année :" << anneeSortie << endl;
+	cout << "  Ventes: " << ventes << "livres" << endl;
 }
+
 
 int main()
 {
-	#ifdef VERIFICATION_ALLOCATION_INCLUS
+#ifdef VERIFICATION_ALLOCATION_INCLUS
 	bibliotheque_cours::VerifierFuitesAllocations verifierFuitesAllocations;
-	#endif
+#endif
 	bibliotheque_cours::activerCouleursAnsi();  // Permet sous Windows les "ANSI escape code" pour changer de couleurs https://en.wikipedia.org/wiki/ANSI_escape_code ; les consoles Linux/Mac les supportent normalement par défaut.
 
 	static const string ligneDeSeparation = "\n\033[35m════════════════════════════════════════\033[0m\n";
 
 	ListeFilms listeFilms = creerListe("films.bin");
-	
+
 	/*---------------------TD4----------------------*/
 
 	//TODO: 2.Construction de la bibilothèque
 	cout << "Creation bibliotheque:" << endl;
-	vector<Item> bibliotheque(listeFilms.size());
+	vector<Item*> bibliotheque(listeFilms.size());
 
-	for (Film* film : listeFilms.enSpan()) {
-		bibliotheque.push_back(*film);
-		cout << film->titre << endl;
+	Item* pointeur = listeFilms[0];
+	pointeur->afficher();
+
+	ifstream Livres("Livres.txt");
+	string element;
+	while (getline(Livres, element, '\t'))
+	{
+		cout << "Creation d'un livre:" << endl;
+		Livre* livre = new Livre;
+
+		livre->titre = element;
+		cout << livre->titre << endl;
+
+		getline(Livres, element, '\t');
+		livre->anneeSortie = stoi(element);
+		cout << livre->anneeSortie << endl;
+
+		getline(Livres, element, '\t');
+		livre->auteur = element;
+		cout << livre->auteur << endl;
+
+		getline(Livres, element, '\t');
+		livre->ventes = stoi(element);
+		cout << livre->ventes << endl;
+
+		getline(Livres, element, '\n');
+		livre->nPages = stoi(element);
+		cout << livre->nPages << endl;
+
+		delete livre;
 	}
+
+	/*for (Film* film : listeFilms.enSpan()) {
+		bibliotheque.push_back(film);
+		bibliotheque[0]->afficher();
+	}*/
+
+	//TODO Ajouter les livres dans la bibliothèque
 
 	//TODO: 3.Affichage de la bibliothèque
 
 	//TODO: 4.Un item combo FilmLivre
-
-	cout << ligneDeSeparation << "Le premier film de la liste est:" << endl;
-	// Le premier film de la liste.  Devrait être Alien.
-	cout << *listeFilms[0];
-
-	// Tests chapitre 7:
-	ostringstream tamponStringStream;
-	tamponStringStream << *listeFilms[0];
-	string filmEnString = tamponStringStream.str();
-	assert(filmEnString == 
-		"Titre: Alien\n"
-		"  Réalisateur: Ridley Scott  Année :1979\n"
-		"  Recette: 203M$\n"
-		"Acteurs:\n"
-		"  Tom Skerritt, 1933 M\n"
-		"  Sigourney Weaver, 1949 F\n"
-		"  John Hurt, 1940 M\n"
-	);
-
-	cout << ligneDeSeparation << "Les films sont:" << endl;
-	// Affiche la liste des films.  Il devrait y en avoir 7.
-	cout << listeFilms;
-
-	listeFilms.trouverActeur("Benedict Cumberbatch")->anneeNaissance = 1976;
-
-	// Tests chapitres 7-8:
-	// Les opérations suivantes fonctionnent.
-	Film skylien = *listeFilms[0];
-	skylien.titre = "Skylien";
-	skylien.acteurs[0] = listeFilms[1]->acteurs[0];
-	skylien.acteurs[0]->nom = "Daniel Wroughton Craig";
-	cout << ligneDeSeparation
-		<< "Les films copiés/modifiés, sont:\n"
-		<< skylien << *listeFilms[0] << *listeFilms[1] << ligneDeSeparation;
-	assert(skylien.acteurs[0]->nom == listeFilms[1]->acteurs[0]->nom);
-	assert(skylien.acteurs[0]->nom != listeFilms[0]->acteurs[0]->nom);
-
-	// Tests chapitre 10:
-	auto film955 = listeFilms.trouver([](const auto& f) { return f.recette == 955; });
-	cout << "\nFilm de 955M$:\n" << *film955;
-	assert(film955->titre == "Le Hobbit : La Bataille des Cinq Armées");
-	assert(listeFilms.trouver([](const auto&) { return false; }) == nullptr); // Pour la couveture de code: chercher avec un critère toujours faux ne devrait pas trouver.
-
-	// Tests chapitre 9:
-	Liste<string> listeTextes(2);
-	listeTextes.ajouter(make_shared<string>("Bonjour"));
-	listeTextes.ajouter(make_shared<string>("Allo"));
-	Liste<string> listeTextes2 = listeTextes;
-	listeTextes2[0] = make_shared<string>("Hi");
-	*listeTextes2[1] = "Allo!";
-	assert(*listeTextes[0] == "Bonjour");
-	assert(*listeTextes[1] == *listeTextes2[1]);
-	assert(*listeTextes2[0] == "Hi");
-	assert(*listeTextes2[1] == "Allo!");
-	listeTextes = move(listeTextes2);  // Pas demandé, mais comme j'ai fait la méthode on va la tester; noter que la couverture de code dans VisualStudio ne montre pas la couverture des constructeurs/opérateurs= =default.
-	assert(*listeTextes[0] == "Hi" && *listeTextes[1] == "Allo!");
-
-	// Détruit et enlève le premier film de la liste (Alien).
-	delete listeFilms[0];
-	listeFilms.enleverFilm(listeFilms[0]);
-
-	cout << ligneDeSeparation << "Les films sont maintenant:" << endl;
-	cout << listeFilms;
-
-	// Pour une couverture avec 0% de lignes non exécutées:
-	listeFilms.enleverFilm(nullptr); // Enlever un film qui n'est pas dans la liste (clairement que nullptr n'y est pas).
-	assert(listeFilms.size() == 6);
 
 	// Détruire tout avant de terminer le programme.
 	listeFilms.detruire(true);
