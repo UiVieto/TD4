@@ -208,6 +208,22 @@ ostream& operator<< (ostream& os, const ListeFilms& listeFilms)
 	return os;
 }
 
+void Item::afficher() {
+	cout << "Titre: " << film.titre << "  Année :" << film.anneeSortie << endl;
+}
+
+void Film::afficher() {
+	cout << *this;
+}
+
+void Livre::afficher() {
+	cout << "Titre: " << film.titre << endl;
+	cout << "  Réalisateur: " << film.realisateur << "  Année :" << film.anneeSortie << endl;
+	cout << "  Recette: " << film.recette << "M$" << endl;
+
+	cout << "Acteurs:" << endl;
+}
+
 int main()
 {
 	#ifdef VERIFICATION_ALLOCATION_INCLUS
@@ -223,10 +239,10 @@ int main()
 
 	//TODO: 2.Construction de la bibilothèque
 	cout << "Creation bibliotheque:" << endl;
-	vector<Film*> bibliotheque(listeFilms.size());
+	vector<Item> bibliotheque(listeFilms.size());
 
 	for (Film* film : listeFilms.enSpan()) {
-		bibliotheque.push_back(film);
+		bibliotheque.push_back(*film);
 		cout << film->titre << endl;
 	}
 

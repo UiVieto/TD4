@@ -73,8 +73,11 @@ private:
 };
 using ListeActeurs = Liste<Acteur>;
 
-struct Item {
+class Item {
 public:
+	Item() = default;
+	virtual ~Item();
+
 	string titre = "Item"s;
 	int anneSortie = 0;
 };
