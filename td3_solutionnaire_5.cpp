@@ -213,7 +213,12 @@ void Film::afficher() {
 	cout << "Titre: " << titre << endl;
 	cout << "  Réalisateur: " << realisateur << "  Année :" << anneeSortie << endl;
 	cout << "  Recette: " << recette << "M$" << endl;
+
+	cout << "Acteurs:" << endl;
+	for (const shared_ptr<Acteur>& acteur : acteurs.enSpan())
+		cout << *acteur;
 }
+
 
 void Livre::afficher() {
 	cout << "Titre: " << titre << endl;
@@ -221,28 +226,9 @@ void Livre::afficher() {
 	cout << "  Ventes: " << ventes << "livres" << endl;
 }
 
-
-int main()
+void ajouterLivres(string nomFichierLivres, vector<Item*>& bibliotheque)
 {
-#ifdef VERIFICATION_ALLOCATION_INCLUS
-	bibliotheque_cours::VerifierFuitesAllocations verifierFuitesAllocations;
-#endif
-	bibliotheque_cours::activerCouleursAnsi();  // Permet sous Windows les "ANSI escape code" pour changer de couleurs https://en.wikipedia.org/wiki/ANSI_escape_code ; les consoles Linux/Mac les supportent normalement par défaut.
-
-	static const string ligneDeSeparation = "\n\033[35m════════════════════════════════════════\033[0m\n";
-
-	ListeFilms listeFilms = creerListe("films.bin");
-
-	/*---------------------TD4----------------------*/
-
-	//TODO: 2.Construction de la bibilothèque
-	cout << "Creation bibliotheque:" << endl;
-	vector<Item*> bibliotheque(listeFilms.size());
-
-	Item* pointeur = listeFilms[0];
-	pointeur->afficher();
-
-	ifstream Livres("Livres.txt");
+	ifstream Livres(nomFichierLivres);
 	string element;
 	while (getline(Livres, element, '\t'))
 	{
@@ -250,7 +236,7 @@ int main()
 		Livre* livre = new Livre;
 
 		livre->titre = element;
-		cout << livre->titre << endl;
+		cout << "Titre: " << livre->titre << endl;
 
 		getline(Livres, element, '\t');
 		livre->anneeSortie = stoi(element);
@@ -268,20 +254,48 @@ int main()
 		livre->nPages = stoi(element);
 		cout << livre->nPages << endl;
 
-		delete livre;
+		bibliotheque.push_back(livre);
+	}
+}
+
+
+int main()
+{
+#ifdef VERIFICATION_ALLOCATION_INCLUS
+	bibliotheque_cours::VerifierFuitesAllocations verifierFuitesAllocations;
+#endif
+	bibliotheque_cours::activerCouleursAnsi();  // Permet sous Windows les "ANSI escape code" pour changer de couleurs https://en.wikipedia.org/wiki/ANSI_escape_code ; les consoles Linux/Mac les supportent normalement par défaut.
+
+	static const string ligneDeSeparation = "\n\033[35m════════════════════════════════════════\033[0m\n";
+
+	ListeFilms listeFilms = creerListe("films.bin");
+
+	/*---------------------TD4----------------------*/
+
+	//TODO: 2.Construction de la bibilothèque
+
+	cout << "Creation bibliotheque:" << endl;
+	vector<Item*> bibliotheque;
+
+	for (Film* film : listeFilms.enSpan()) {
+		bibliotheque.push_back((film));
 	}
 
-	/*for (Film* film : listeFilms.enSpan()) {
-		bibliotheque.push_back(film);
-		bibliotheque[0]->afficher();
-	}*/
+	ajouterLivres("Livres.txt", bibliotheque);
 
-	//TODO Ajouter les livres dans la bibliothèque
+	cout << "Affichage de la bibliotheque" << endl;
+	for (Item* item : bibliotheque)
+		item->afficher();
 
-	//TODO: 3.Affichage de la bibliothèque
+	ajouterLivres("Livres.txt", bibliotheque);
+
+	for (Item* item : bibliotheque) {
+		item->afficher();
+	}
 
 	//TODO: 4.Un item combo FilmLivre
 
 	// Détruire tout avant de terminer le programme.
 	listeFilms.detruire(true);
+}
 }
