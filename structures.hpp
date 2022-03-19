@@ -135,6 +135,7 @@ private:
 	int ventes_, nbPages_;
 };
 
+
 struct Acteur
 {
 	string nom; int anneeNaissance = 0; char sexe = '\0';
