@@ -209,55 +209,116 @@ ostream& operator<< (ostream& os, const ListeFilms& listeFilms)
 	return os;
 }
 
-void Film::afficher() {
-	cout << "Titre: " << titre << endl;
-	cout << "  Réalisateur: " << realisateur << "  Année :" << anneeSortie << endl;
-	cout << "  Recette: " << recette << "M$" << endl;
+ostream& Film::afficher(ostream& os) const {
+	os << "Titre: " << titre << endl;
+	os << "  Réalisateur: " << realisateur << "  Année :" << anneeSortie << endl;
+	os << "  Recette: " << recette << "M$" << endl;
 
-	cout << "Acteurs:" << endl;
+	os << "Acteurs:" << endl;
 	for (const shared_ptr<Acteur>& acteur : acteurs.enSpan())
-		cout << *acteur;
+		os << *acteur;
+
+	return os;
 }
 
+ostream& Livre::afficher(ostream& os) const {
+	os << "Titre: " << titre << endl;
+	os << "  Auteur: " << auteur << "  Année: " << anneeSortie << endl;
+	os << "  Nombre de Pages: " << nPages << endl;
+	os << "  Ventes: " << ventes << " millions de copies" << endl;
 
-void Livre::afficher() {
-	cout << "Titre: " << titre << endl;
-	cout << "  Auteur: " << auteur << "  Année :" << anneeSortie << endl;
-	cout << "  Ventes: " << ventes << "livres" << endl;
+	return os;
 }
 
-void ajouterLivres(string nomFichierLivres, vector<Item*>& bibliotheque)
+void ajouterLivres(string nomFichierLivres, vector<unique_ptr<Item>>& bibliotheque)
 {
 	ifstream Livres(nomFichierLivres);
 	string element;
 	while (getline(Livres, element, '\t'))
 	{
-		cout << "Creation d'un livre:" << endl;
-		Livre* livre = new Livre;
+		cout << "Creation du livre: " << element << endl;
+		unique_ptr<Livre> livre = make_unique<Livre>();
 
 		livre->titre = element;
-		cout << "Titre: " << livre->titre << endl;
 
 		getline(Livres, element, '\t');
 		livre->anneeSortie = stoi(element);
-		cout << livre->anneeSortie << endl;
 
 		getline(Livres, element, '\t');
 		livre->auteur = element;
-		cout << livre->auteur << endl;
 
 		getline(Livres, element, '\t');
 		livre->ventes = stoi(element);
-		cout << livre->ventes << endl;
 
 		getline(Livres, element, '\n');
 		livre->nPages = stoi(element);
-		cout << livre->nPages << endl;
 
-		bibliotheque.push_back(livre);
+		cout << "Ajout de:" << livre->titre << endl;
+		bibliotheque.push_back(move(livre));
 	}
 }
 
+Film::Film(const Film& film)
+{
+	this->acteurs = Liste(film.acteurs);
+	this->titre = film.titre;
+	this->anneeSortie = film.anneeSortie;
+	this->realisateur = film.realisateur;
+	this->recette = film.recette;
+}
+
+ostream& operator<< (ostream& os, const Item& item) {
+	return item.afficher(os);
+}
+
+FilmLivre::FilmLivre(const Film& film, const Livre& livre)
+{
+	this->acteurs = Liste(film.acteurs);
+	this->anneeSortie = film.anneeSortie;
+	this->titre = film.titre;
+	this->realisateur = film.realisateur;
+	this->recette = film.recette;
+	this->auteur = livre.auteur;
+	this->nPages = livre.nPages;
+	this->ventes = livre.ventes;
+}
+
+ostream& FilmLivre::afficher(ostream& os) const
+{
+	os << "Titre: " << Film::titre << endl;
+	os << "  Réalisateur: " << realisateur << "  Année :" << Film::anneeSortie << endl;
+	os << "  Recette: " << recette << "M$" << endl;
+
+	os << "Acteurs:" << endl;
+	for (const shared_ptr<Acteur>& acteur : acteurs.enSpan())
+		os << *acteur;
+
+	os << "Auteur: " << auteur << endl;
+	os << "Nombre de Pages: " << nPages << endl;
+	os << "Ventes: " << ventes << " millions de copies" << endl;
+
+	return os;
+}
+
+void afficherListeItems(vector<unique_ptr<Item>>& listeItems)
+{
+	for (unique_ptr<Item>& item : listeItems) {
+		cout << "=====================================================" << endl;
+		cout << *item;
+	}
+}
+
+FilmLivre::FilmLivre(const FilmLivre& filmLivre)
+{
+	this->acteurs = Liste(filmLivre.acteurs);
+	this->anneeSortie = filmLivre.anneeSortie;
+	this->titre = filmLivre.titre;
+	this->realisateur = filmLivre.realisateur;
+	this->recette = filmLivre.recette;
+	this->auteur = filmLivre.auteur;
+	this->nPages = filmLivre.nPages;
+	this->ventes = filmLivre.ventes;
+}
 
 int main()
 {
@@ -272,30 +333,28 @@ int main()
 
 	/*---------------------TD4----------------------*/
 
-	//TODO: 2.Construction de la bibilothèque
-
+	cout << ligneDeSeparation;
 	cout << "Creation bibliotheque:" << endl;
-	vector<Item*> bibliotheque;
+	vector<unique_ptr<Item>> bibliotheque;
 
 	for (Film* film : listeFilms.enSpan()) {
-		bibliotheque.push_back((film));
+		cout << "Ajout de: " << film->titre << endl;
+		bibliotheque.push_back(move(make_unique<Film>(*film)));
 	}
 
 	ajouterLivres("Livres.txt", bibliotheque);
+	cout << ligneDeSeparation;
 
-	cout << "Affichage de la bibliotheque" << endl;
-	for (Item* item : bibliotheque)
-		item->afficher();
+	cout << "Affichage de la bibliotheque:" << endl;
+	afficherListeItems(bibliotheque);
+	cout << ligneDeSeparation;
 
-	ajouterLivres("Livres.txt", bibliotheque);
-
-	for (Item* item : bibliotheque) {
-		item->afficher();
-	}
-
-	//TODO: 4.Un item combo FilmLivre
+	FilmLivre hobbit(*dynamic_cast<Film*>(bibliotheque[4].get()), *dynamic_cast<Livre*>(bibliotheque[9].get()));
+	bibliotheque.push_back(move(make_unique<FilmLivre>(hobbit)));
+	cout << *bibliotheque[12];
 
 	// Détruire tout avant de terminer le programme.
 	listeFilms.detruire(true);
-}
+
+	return 0;
 }

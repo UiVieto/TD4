@@ -9,17 +9,6 @@
 #include <cassert>
 #include "gsl/span"
 using gsl::span;
-// Solutionnaire du TD3 INF1015 hiver 2021
-// Par Francois-R.Boyer@PolyMtl.ca
-#pragma once
-// Structures mémoires pour une collection de films.
-
-#include <string>
-#include <memory>
-#include <functional>
-#include <cassert>
-#include "gsl/span"
-using gsl::span;
 using namespace std;
 
 struct Film; struct Acteur; // Permet d'utiliser les types alors qu'ils seront défini après.
@@ -90,30 +79,43 @@ public:
 	Item(const Item& item) = delete;
 	virtual ~Item() = default;
 
-	virtual void afficher() = 0;
+	virtual ostream& afficher(ostream& os) const = 0;
+	friend ostream& operator<< (ostream& os, const Item& item);
 
 	string titre = "Item"s;
 	int anneeSortie = 0;
 };
 
 
-struct Film : public Item
+struct Film : virtual public Item
 {
 	Film() = default;
-	virtual void afficher();
+	Film(const Film& film);
+	virtual ~Film() = default;
+	ostream& afficher(ostream& os) const override;
 
-	string titre, realisateur; // Titre et nom du réalisateur (on suppose qu'il n'y a qu'un réalisateur).
-	int anneeSortie = 0, recette = 0; // Année de sortie et recette globale du film en millions de dollars
+	string realisateur; // Titre et nom du réalisateur (on suppose qu'il n'y a qu'un réalisateur).
+	int recette = 0; // Année de sortie et recette globale du film en millions de dollars
 	ListeActeurs acteurs;
 };
 
-struct Livre : public Item
+struct Livre : virtual public Item
 {
-	virtual void afficher();
+	virtual ~Livre() = default;
+	ostream& afficher(ostream& os) const override;
 
 	string auteur;
-	int ventes, nPages;
+	int ventes = 0, nPages = 0;
 };
+
+struct FilmLivre : public Film, public Livre
+{
+	FilmLivre(const FilmLivre& filmLivre);
+	FilmLivre(const Film& film, const Livre& livre);
+	virtual ~FilmLivre() = default;
+	ostream& afficher(ostream& os) const override;
+};
+
 
 struct Acteur
 {
